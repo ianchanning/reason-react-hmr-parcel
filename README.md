@@ -1,61 +1,128 @@
-# ReasonReact Template & Examples
+# Reason React with Hot Module Replacement
 
-This is:
-- A template for your new ReasonReact project.
-- A collection of thin examples illustrating ReasonReact usage.
-- Extra helper documentation for ReasonReact (full ReasonReact docs [here](https://reasonml.github.io/reason-react/)).
+## What
 
-`src` contains 4 sub-folders, each an independent, self-contained ReasonReact example. Feel free to delete any of them and shape this into your project! This template's more malleable than you might be used to =).
+This is a starter project for [Reason React](https://rescript-lang.org/docs/reason-react/latest/introduction) that makes use of the zero configuration [Parcel](https://parceljs.org) JavaScript bundler to provide compilation and [Hot Module Replacement (HMR) for React](https://gaearon.github.io/react-hot-loader/getstarted/).
 
-The point of this template and examples is to let you understand and personally tweak the entirely of it. We **don't** give you an opaque, elaborate mega build setup just to put some boxes on the screen. It strikes to stay transparent, learnable, and simple. You're encouraged to read every file; it's a great feeling, having the full picture of what you're using and being able to touch any part.
+## Quickstart
 
-## Run
+For yarn:
+
+```sh
+yarn install
+yarn start
+```
+
+For npm (I only tested with yarn, let me know if this doesn't work):
 
 ```sh
 npm install
-npm run server
-# in a new tab
-npm start
+npm run start
 ```
 
-Open a new web page to `http://localhost:8000/`. Change any `.re` file in `src` to see the page auto-reload. **You don't need any bundler when you're developing**!
+Goto <http://localhost:1234/> and you should see a "Hello World" page. If you modify `src/Index.re` then the page should update without refreshing.
 
-**How come we don't need any bundler during development**? We highly encourage you to open up `index.html` to check for yourself!
+## Why
 
-# Features Used
-
-|                           | Blinking Greeting | Reducer from ReactJS Docs | Fetch Dog Pictures | Reason Using JS Using Reason |
-|---------------------------|-------------------|---------------------------|--------------------|------------------------------|
-| No props                  |                   | ✓                         |                    |                              |
-| Has props                 |                   |                           |                    | ✓                            |
-| Children props            | ✓                 |                           |                    |                              |
-| No state                  |                   |                           |                    | ✓                            |
-| Has state                 | ✓                 |                           |  ✓                 |                              |
-| Has state with useReducer |                   | ✓                         |                    |                              |
-| ReasonReact using ReactJS |                   |                           |                    | ✓                            |
-| ReactJS using ReasonReact |                   |                           |                    | ✓                            |
-| useEffect                 | ✓                 |                           |  ✓                 |                              |
-| Dom attribute             | ✓                 | ✓                         |                    | ✓                            |
-| Styling                   | ✓                 | ✓                         |  ✓                 | ✓                            |
-| React.array               |                   |                           |  ✓                 |                              |
-
-# Bundle for Production
-
-We've included a convenience `UNUSED_webpack.config.js`, in case you want to ship your project to production. You can rename and/or remove that in favor of other bundlers, e.g. Rollup.
-
-We've also provided a barebone `indexProduction.html`, to serve your bundle.
+This project started with the [ReasonReact official template](https://rescript-lang.org/docs/reason-react/latest/installation) created via
 
 ```sh
-npm install webpack webpack-cli
-# rename file
-mv UNUSED_webpack.config.js webpack.config.js
-# call webpack to bundle for production
-./node_modules/.bin/webpack
-open indexProduction.html
+bsb -init my-react-app -theme react-hooks
 ```
 
-# Handle Routing Yourself
+However that uses a custom [self described 'hack'](https://github.com/marijnh/moduleserve) for a server and their own `watcher.js` code:
 
-To serve the files, this template uses a minimal dependency called `moduleserve`. A URL such as `localhost:8000/scores/john` resolves to the file `scores/john.html`. If you'd like to override this and handle URL resolution yourself, change the `server` command in `package.json` from `moduleserve ./ --port 8000` to `moduleserve ./ --port 8000 --spa` (for "single page application"). This will make `moduleserve` serve the default `index.html` for any URL. Since `index.html` loads `Index.bs.js`, you can grab hold of the URL in the corresponding `Index.re` and do whatever you want.
+```html
+  <!-- This is https://github.com/marijnh/moduleserve, the secret sauce that allows us not need to bundle things during development, and have instantaneous iteration feedback, without any hot-reloading or extra build pipeline needed. -->
+  <script src="/moduleserve/load.js" data-module="/src/Index.bs.js"></script>
+  <!-- Our little watcher. Super clean. Check it out! -->
+  <script src="/watcher.js"></script>
+```
 
-By the way, ReasonReact comes with a small [router](https://reasonml.github.io/reason-react/docs/en/router) you might be interested in.
+I understand their desire to provide an alternative to Webpack and they do provide a Webpack config for 'production'. The `watcher.js` code is very interesting and powerful for just 30 lines of JS code but I couldn't get it to work with HMR.
+
+So I had two goals:
+
+1. I don't like Webpack, and I've come to prefer Parcel, at least for my simple projects where Parcel's promise of zero configuration works beautifully. If a project gests suitably complex that I need the Webpack overhead then sure, but otherwise I'd rather not have to think about it.
+1. I wanted proper HMR, this means not some kind of auto-refresh, this is where the page updates without reloading so that you don't lose state. See the [comment from Dan Abramov on his video for HMR](https://vimeo.com/100010922#comment_12846462):
+
+    > It's totally different. Livereload will trigger page refresh. It won't preserve the state of your components. Which makes editing complex UIs on the fly super irritating.
+
+Parcel have made the lovely effort to support [ReasonML](https://parceljs.org/reasonML.html) and [React Hot Loader (RHL)](https://parceljs.org/hmr.html) out of the box. You need to include the `module.hot.accept` code snippet, but so does every RHL project from what I know.
+
+## How
+
+I made a couple of modifications to the template that comes from the `react-hooks` theme:
+
+I switched the `bsconfig` to generate standard ES modules, as mentioned in the BuckleScript (now ReScript) [Config > package-specs docs](https://rescript-lang.org/docs/manual/latest/build-configuration#package-specs).
+
+`bsconfig.json`:
+
+```diff
+   "package-specs": [{
+-    "module": "commonjs",
++    "module": "es6-global",
+     "in-source": true
+   }],
+```
+
+Note that that probably isn't required, but it seems crazy to be generating CommonJS modules now that we've got ES modules as standard.
+
+I deleted pretty much all the code from the src directory and left nothing but this in `src/Index.re`:
+
+```reason
+ReactDOMRe.renderToElementWithId(
+  <h1>{React.string("Hello World")}</h1>,
+  "root"
+);
+```
+
+Then I added the code to include HMR that has been converted to Reason syntax thanks to this [gist](https://gist.github.com/rusty-key/f0412e79006c36a9c8ceda22e7495b6a), found via this [blog post](https://jeroenpelgrims.com/quick-and-dirty-react-reason-hmr-hot-module-reloading/):
+
+```reason
+[@bs.val] [@bs.scope ("module")]
+// set isHotEnabled equal to module.hot
+external isHotEnabled : bool = "hot";
+// set hotAccept equal to module.hot.accept
+[@bs.val] [@bs.scope ("module", "hot")] external hotAccept : unit => unit = "accept";
+
+// enable HMR
+if (isHotEnabled) {
+  hotAccept();
+}
+```
+
+Then I modified the `index.html` to refer directly to the `src/Index.re` file as in the [parcel docs](https://parceljs.org/reasonML.html#reasonml/bucklescript) and just include a basic `root` element:
+
+```html
+  <div id="root"></div>
+  <script src="./src/Index.re"></script>
+```
+
+Then I updated the `package.json` to replace the 'start' script.
+
+`package.json`:
+
+```diff
+   "scripts": {
+     "build": "bsb -make-world",
++    "start": "parcel index.html",
+-    "start": "bsb -make-world -w -ws _ ",
+     "clean": "bsb -clean-world",
+-    "moduleserver": "moduleserve ./ --port 8000",
+     "test": "echo \"Error: no test specified\" && exit 1"
+   },
+```
+
+Now running
+
+```sh
+yarn install
+yarn start
+```
+
+Should get a page to appear at <http://localhost:1234/> which should reload changes to `src/Index.re` without a page refresh.
+
+## Future
+
+There is an upcoming [Parcel v2](https://v2.parceljs.org/) which includes the updated react-hot-loader with React [HMR Fast Refresh](https://v2.parceljs.org/recipes/react/#hmr-(fast-refresh)). I know this does work with React - but it doesn't work with ReasonML yet. My attempts at getting Parcel v2 with the `watcher.js` to update the Reason code failed in that all I could get was a basic page-refresh which ruins the whole purpose.
