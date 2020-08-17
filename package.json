@@ -1,18 +1,17 @@
 {
-  "name": "my-react-app",
+  "name": "reason-react-hmr-parcel",
   "version": "0.1.0",
   "scripts": {
     "build": "bsb -make-world",
-    "start": "bsb -make-world -w -ws _ ",
+    "start": "parcel index.html",
     "clean": "bsb -clean-world",
-    "parcel": "parcel index.html",
-    "moduleserver": "moduleserve ./ --port 8000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "BuckleScript",
     "ReasonReact",
-    "reason-react"
+    "reason-react",
+    "parcel"
   ],
   "author": "",
   "license": "MIT",
@@ -24,7 +23,6 @@
   "devDependencies": {
     "bs-platform": "^7.3.2",
     "bsb-js": "^1.1.7",
-    "moduleserve": "^0.9.1",
     "parcel-bundler": "^1.12.4"
   }
 }

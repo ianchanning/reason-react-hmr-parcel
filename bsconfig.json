@@ -1,5 +1,5 @@
 {
-  "name": "reason-react-examples",
+  "name": "reason-react-hmr-parcel",
   "reason": {
     "react-jsx": 3
   },
